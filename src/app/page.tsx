@@ -1,37 +1,27 @@
-import StackedDraggableCards from '../components/StackedDraggableCards';
+import Image from 'next/image';
+import SignInButton from '../components/SignInButton';
+import SignOutButton from '../components/SignOutButton/SignOutButton';
+import { auth } from '../lib/auth';
+import { cn } from '../utils/cn';
 
-export default function Home() {
-    const initial = [
-        {
-            id: 1,
-            channelName: 'Hello',
-            color: 'bg-red-200',
-        },
-        {
-            id: 2,
-            channelName: 'Hello',
-            color: 'bg-green-200',
-        },
-        {
-            id: 3,
-            channelName: 'Hello',
-            color: 'bg-blue-200',
-        },
-        {
-            id: 4,
-            channelName: 'Hello',
-            color: 'bg-purple-200',
-        },
-        {
-            id: 5,
-            channelName: 'Hello',
-            color: 'bg-yellow-200',
-        },
-    ];
+export default async function Home() {
+    const session = await auth();
+
+    console.log(session);
+
     return (
         <div>
             <main>
-                <StackedDraggableCards initial={initial} />
+                {!session?.user ? (
+                    <SignInButton />
+                ) : (
+                    <div className={cn('flex flex-col justify-center items-center min-h-screen')}>
+                        <div>{session.user.name}</div>
+                        <div>{session.user.email}</div>
+                        <Image src={session.user.image ?? ''} width={80} height={80} alt="profile" />
+                        <SignOutButton />
+                    </div>
+                )}
             </main>
         </div>
     );
