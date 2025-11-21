@@ -2,10 +2,12 @@ import { defineConfig, globalIgnores } from 'eslint/config';
 import nextVitals from 'eslint-config-next/core-web-vitals';
 import nextTs from 'eslint-config-next/typescript';
 import prettier from 'eslint-config-prettier';
+import reactQueryPlugin from '@tanstack/eslint-plugin-query';
 
 const eslintConfig = defineConfig([
     ...nextVitals,
     ...nextTs,
+    ...reactQueryPlugin.configs['flat/recommended'],
     prettier,
 
     // Override default ignores of eslint-config-next.

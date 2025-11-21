@@ -1,6 +1,9 @@
 import StackedDraggableCards from '@/src/components/StackedDraggableCards';
+import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query';
 
-export default function YoutubePage() {
+export default async function YoutubePage() {
+    const queryClient = new QueryClient();
+
     const initial = [
         {
             id: 1,
@@ -30,8 +33,8 @@ export default function YoutubePage() {
     ];
 
     return (
-        <div>
+        <HydrationBoundary state={dehydrate(queryClient)}>
             <StackedDraggableCards initial={initial} />
-        </div>
+        </HydrationBoundary>
     );
 }
