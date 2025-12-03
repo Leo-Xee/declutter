@@ -11,16 +11,11 @@ import {
     SetStateAction,
     useCallback,
     useContext,
+    useEffect,
     useMemo,
     useRef,
     useState,
 } from 'react';
-
-type Card = {
-    id: number;
-    channelName: string;
-    color: string;
-};
 
 const DIRECTION = {
     LEFT: 'left',
@@ -29,9 +24,16 @@ const DIRECTION = {
 
 type Direction = (typeof DIRECTION)[keyof typeof DIRECTION];
 
-type StackedCardContextValue = {
-    cards: Card[];
-    setCards: Dispatch<SetStateAction<Card[]>>;
+type StackedCardItem<T> = {
+    value: T;
+    key: number;
+};
+
+type StackedCardContextValue<T> = {
+    cards: StackedCardItem<T>[];
+    totalCount?: number | null;
+    consumedCardCount: number;
+    consumeCard: () => void;
     activedDirection: Direction | null;
     setActivedDirection: Dispatch<SetStateAction<Direction | null>>;
     constraintsRef: RefObject<HTMLDivElement | null>;
@@ -41,31 +43,48 @@ type StackedCardContextValue = {
     dragScale: MotionValue<number>;
     stackLayout: { zIndex: number; posY: number; rotate: number }[];
     getDirectionByDx: (dx: number, deadZone: number) => Direction | null;
+    renderCard: (card: T) => ReactNode;
 };
 
-const StackedCardContext = createContext<StackedCardContextValue | null>(null);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const StackedCardContext = createContext<StackedCardContextValue<any> | null>(null);
 
-function useStackedCard() {
+function useStackedCard<T>() {
     const context = useContext(StackedCardContext);
 
     if (!context) {
         throw new Error('StackedCard compound components must be used within StackedCard.Root');
     }
 
-    return context;
+    return context as StackedCardContextValue<T>;
 }
 
 /**
  *  Root
  */
 
-type StackedCardRootProps = {
-    initial: Card[];
+type StackedCardRootProps<T> = {
+    data: T[];
+    renderCard?: (item: T) => ReactNode;
     children?: ReactNode;
+    visibleCount?: number;
+    prefetchThreshold?: number;
+    hasMore?: boolean;
+    onLoadMore?: () => Promise<unknown> | void;
+    totalCount?: number | null;
 };
 
-function StackedCardRoot({ initial, children }: StackedCardRootProps) {
-    const [cards, setCards] = useState<Card[]>([...initial].reverse());
+function StackedCardRoot<T>({
+    data,
+    renderCard,
+    children,
+    visibleCount = 5,
+    prefetchThreshold = 10,
+    hasMore = false,
+    onLoadMore,
+    totalCount,
+}: StackedCardRootProps<T>) {
+    const [consumedCardCount, setConsumedCardCount] = useState(0);
     const [activedDirection, setActivedDirection] = useState<Direction | null>(null);
 
     const constraintsRef = useRef<HTMLDivElement | null>(null);
@@ -74,6 +93,16 @@ function StackedCardRoot({ initial, children }: StackedCardRootProps) {
     const mvY = useMotionValue(0);
     const dragRotate = useTransform(mvX, [-150, 0, 150], [-15, 0, 15]);
     const dragScale = useTransform(mvY, [-120, 0, 200], [0.98, 1, 1.03]);
+
+    const cards = useMemo<StackedCardItem<T>[]>(() => {
+        return data
+            .slice(consumedCardCount, consumedCardCount + visibleCount)
+            .map((item, index) => ({
+                value: item,
+                key: consumedCardCount + index,
+            }))
+            .reverse();
+    }, [consumedCardCount, data, visibleCount]);
 
     const stackLayout = useMemo(
         () =>
@@ -91,21 +120,49 @@ function StackedCardRoot({ initial, children }: StackedCardRootProps) {
         return null;
     }, []);
 
+    const consumeCard = useCallback(() => {
+        setConsumedCardCount((prev) => Math.min(prev + 1, data.length));
+    }, [data.length]);
+
+    const remainingDataCount = Math.max(data.length - consumedCardCount, 0);
+    const pendingPrefetchRef = useRef(false);
+
+    useEffect(() => {
+        if (!onLoadMore || !hasMore) {
+            pendingPrefetchRef.current = false;
+            return;
+        }
+
+        if (remainingDataCount <= prefetchThreshold) {
+            if (!pendingPrefetchRef.current) {
+                pendingPrefetchRef.current = true;
+                onLoadMore();
+            }
+        } else {
+            pendingPrefetchRef.current = false;
+        }
+    }, [hasMore, onLoadMore, prefetchThreshold, remainingDataCount]);
+
     return (
         <StackedCardContext.Provider
-            value={{
-                cards,
-                setCards,
-                activedDirection,
-                setActivedDirection,
-                constraintsRef,
-                mvX,
-                mvY,
-                dragRotate,
-                dragScale,
-                stackLayout,
-                getDirectionByDx,
-            }}
+            value={
+                {
+                    cards,
+                    totalCount,
+                    consumedCardCount,
+                    consumeCard,
+                    activedDirection,
+                    setActivedDirection,
+                    constraintsRef,
+                    mvX,
+                    mvY,
+                    dragRotate,
+                    dragScale,
+                    stackLayout,
+                    getDirectionByDx,
+                    renderCard,
+                } as StackedCardContextValue<T>
+            }
         >
             <div className={cn('relative overflow-hidden')} ref={constraintsRef}>
                 {children}
@@ -140,6 +197,20 @@ function StackedCardBackground() {
 }
 
 /**
+ * Score
+ */
+
+function StackedCardScore() {
+    const { consumedCardCount, totalCount } = useStackedCard();
+
+    return (
+        <div className={cn('pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 rounded-full')}>
+            {`${consumedCardCount} /  ${totalCount}`}
+        </div>
+    );
+}
+
+/**
  *  List
  */
 
@@ -152,9 +223,10 @@ function StackedCardList() {
         dragRotate,
         dragScale,
         constraintsRef,
-        setCards,
+        consumeCard,
         setActivedDirection,
         getDirectionByDx,
+        renderCard,
     } = useStackedCard();
 
     const handleDrag = () => {
@@ -189,7 +261,7 @@ function StackedCardList() {
                 damping: 30,
             }).finished;
 
-            setCards((prev) => [...prev.slice(0, -1)]);
+            consumeCard();
 
             mvX.set(0);
             mvY.set(0);
@@ -206,7 +278,7 @@ function StackedCardList() {
 
                         return (
                             <motion.div
-                                key={card.id}
+                                key={card.key}
                                 layout
                                 className={cn('absolute inset-0')}
                                 style={{ zIndex }}
@@ -214,7 +286,9 @@ function StackedCardList() {
                                 animate={{ y: posY, rotate, opacity: 1 }}
                             >
                                 <motion.div
-                                    className={`h-full w-full rounded-2xl shadow-lg ${card.color} select-none cursor-grab active:cursor-grabbing `}
+                                    className={cn(
+                                        'h-full w-full rounded-2xl shadow-lg select-none cursor-grab active:cursor-grabbing',
+                                    )}
                                     drag={isTop}
                                     whileHover={{ scale: isTop ? 1.05 : undefined }}
                                     whileTap={{ scale: isTop ? 0.995 : undefined }}
@@ -231,7 +305,9 @@ function StackedCardList() {
                                     onDrag={handleDrag}
                                     onDragStart={handleDragStart}
                                     onDragEnd={handleDragEnd}
-                                ></motion.div>
+                                >
+                                    {renderCard(card.value)}
+                                </motion.div>
                             </motion.div>
                         );
                     })}
@@ -243,4 +319,5 @@ function StackedCardList() {
 
 export const Root = StackedCardRoot;
 export const Background = StackedCardBackground;
+export const Score = StackedCardScore;
 export const List = StackedCardList;

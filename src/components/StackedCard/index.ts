@@ -1,1 +1,1 @@
-export { Root, Background, List } from './StackedCard';
+export { Root, Background, Score, List } from './StackedCard';
