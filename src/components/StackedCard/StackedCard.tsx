@@ -182,14 +182,14 @@ function StackedCardBackground() {
         <>
             <div
                 className={cn(
-                    'pointer-events-none fixed left-0 top-0 h-screen w-[50%] transition-all',
-                    activedDirection === DIRECTION.LEFT ? 'bg-red-100' : 'bg-red-50',
+                    'pointer-events-none fixed left-0 top-0 h-screen w-[50%] transition-all bg-linear-to-l',
+                    activedDirection === DIRECTION.LEFT ? 'from-white to-red-200' : 'from-white to-red-100',
                 )}
             />
             <div
                 className={cn(
-                    'pointer-events-none fixed right-0 top-0 h-screen w-[50%] transition-all',
-                    activedDirection === DIRECTION.RIGHT ? 'bg-green-100' : 'bg-green-50',
+                    'pointer-events-none fixed right-0 top-0 h-screen w-[50%] transition-all bg-linear-to-r',
+                    activedDirection === DIRECTION.RIGHT ? 'from-white to-green-200' : 'from-white to-green-100',
                 )}
             />
         </>
@@ -286,13 +286,10 @@ function StackedCardList() {
                                 animate={{ y: posY, rotate, opacity: 1 }}
                             >
                                 <motion.div
-                                    className={cn(
-                                        'h-full w-full rounded-2xl shadow-lg select-none cursor-grab active:cursor-grabbing',
-                                    )}
+                                    className={cn('h-full w-full select-none cursor-grab active:cursor-grabbing')}
                                     drag={isTop}
                                     whileHover={{ scale: isTop ? 1.05 : undefined }}
                                     whileTap={{ scale: isTop ? 0.995 : undefined }}
-                                    whileDrag={{ boxShadow: '0px 10px 20px rgba(0,0,0,0.2)' }}
                                     dragElastic={0}
                                     dragConstraints={constraintsRef}
                                     dragMomentum={false}

@@ -8,7 +8,9 @@ export default async function YoutubePage() {
 
     return (
         <HydrationBoundary state={dehydrate(queryClient)}>
-            <YoutubeMain />
+            <main>
+                <YoutubeMain />
+            </main>
         </HydrationBoundary>
     );
 }

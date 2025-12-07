@@ -1,4 +1,4 @@
-type YoutubeSubscription = {
+export type YoutubeSubscription = {
     id?: string;
     title?: string;
     description?: string;
