@@ -50,8 +50,8 @@ function CardContent({ item }: CardContentProps) {
                     <Image
                         src={item.thumbnails?.high?.url ?? ''}
                         alt={`${item.title} 채널 썸네일`}
-                        width={90}
-                        height={90}
+                        width={80}
+                        height={80}
                         className={cn(
                             'absolute z-10 top-24 left-1/2 -translate-x-1/2 rounded-full shadow-xl border-2 border-gray-100',
                         )}

@@ -3,13 +3,13 @@ import { isClient } from '@/src/utils/isClient';
 import { infiniteQueryOptions } from '@tanstack/react-query';
 import { YoutubeSubscriptionsResponse } from './types';
 
-type YoutubeSubscriptionsParams = {
+type GetYoutubeSubscriptionsParams = {
     pageParam?: string | null;
 };
 
 const fetchYoutubeSubscriptions = async ({
     pageParam,
-}: YoutubeSubscriptionsParams): Promise<YoutubeSubscriptionsResponse | undefined> => {
+}: GetYoutubeSubscriptionsParams): Promise<YoutubeSubscriptionsResponse | undefined> => {
     const fetcher = isClient() ? clientFetcher : serverFetcher;
 
     try {
@@ -29,8 +29,8 @@ const youtubeSubscriptionKeys = {
     infinite: () => [...youtubeSubscriptionKeys.all, 'infinite'] as const,
 };
 
-export const youtubeSubscriptionsOptions = {
-    infinite: ({ pageParam = null }: YoutubeSubscriptionsParams) =>
+export const youtubeSubscriptionQueryOptions = {
+    infinite: ({ pageParam = null }: GetYoutubeSubscriptionsParams) =>
         infiniteQueryOptions({
             queryKey: youtubeSubscriptionKeys.infinite(),
             initialPageParam: pageParam,

@@ -34,6 +34,10 @@ type StackedCardContextValue<T> = {
     totalCount?: number | null;
     consumedCardCount: number;
     consumeCard: () => void;
+    onSwipeLeft?: (card: T) => Promise<void> | void;
+    onSwipeRight?: (card: T) => Promise<void> | void;
+    swipeCounts: { left: number; right: number };
+    updateSwipeCounts: (direction: Direction) => void;
     activedDirection: Direction | null;
     setActivedDirection: Dispatch<SetStateAction<Direction | null>>;
     constraintsRef: RefObject<HTMLDivElement | null>;
@@ -72,6 +76,8 @@ type StackedCardRootProps<T> = {
     hasMore?: boolean;
     onLoadMore?: () => Promise<unknown> | void;
     totalCount?: number | null;
+    onSwipeLeft?: (item: T) => Promise<void> | void;
+    onSwipeRight?: (item: T) => Promise<void> | void;
 };
 
 function StackedCardRoot<T>({
@@ -83,9 +89,12 @@ function StackedCardRoot<T>({
     hasMore = false,
     onLoadMore,
     totalCount,
+    onSwipeLeft,
+    onSwipeRight,
 }: StackedCardRootProps<T>) {
     const [consumedCardCount, setConsumedCardCount] = useState(0);
     const [activedDirection, setActivedDirection] = useState<Direction | null>(null);
+    const [swipeCounts, setSwipeCounts] = useState({ left: 0, right: 0 });
 
     const constraintsRef = useRef<HTMLDivElement | null>(null);
 
@@ -124,6 +133,13 @@ function StackedCardRoot<T>({
         setConsumedCardCount((prev) => Math.min(prev + 1, data.length));
     }, [data.length]);
 
+    const updateSwipeCounts = useCallback((direction: Direction) => {
+        setSwipeCounts((prev) => ({
+            ...prev,
+            [direction]: prev[direction] + 1,
+        }));
+    }, []);
+
     const remainingDataCount = Math.max(data.length - consumedCardCount, 0);
     const pendingPrefetchRef = useRef(false);
 
@@ -151,6 +167,10 @@ function StackedCardRoot<T>({
                     totalCount,
                     consumedCardCount,
                     consumeCard,
+                    onSwipeLeft,
+                    onSwipeRight,
+                    swipeCounts,
+                    updateSwipeCounts,
                     activedDirection,
                     setActivedDirection,
                     constraintsRef,
@@ -201,11 +221,48 @@ function StackedCardBackground() {
  */
 
 function StackedCardScore() {
-    const { consumedCardCount, totalCount } = useStackedCard();
+    const { consumedCardCount, totalCount, swipeCounts } = useStackedCard();
+
+    const totalSwipes = swipeCounts.left + swipeCounts.right;
+
+    const leftRatio = totalSwipes === 0 ? 0.5 : swipeCounts.left / totalSwipes;
+    const rightRatio = totalSwipes === 0 ? 0.5 : swipeCounts.right / totalSwipes;
 
     return (
-        <div className={cn('pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 rounded-full')}>
-            {`${consumedCardCount} /  ${totalCount}`}
+        <div
+            className={cn(
+                'pointer-events-none absolute top-6 left-1/2 -translate-x-1/2 bg-gray-300/20 backdrop-blur-md rounded-3xl shadow-2xl p-3',
+            )}
+        >
+            <div className={cn('flex flex-col gap-3 items-center')}>
+                <div className={cn('text-center px-4 py-2 bg-white rounded-2xl font-bold text-lg')}>
+                    {`${consumedCardCount} /  ${totalCount}`}
+                </div>
+                <div className={cn('w-46 h-10 flex gap-2 overflow-hidden rounded-2xl')}>
+                    <div
+                        className={cn(
+                            'flex items-center justify-center rounded-2xl min-w-8 text-white text-md font-bold transition-[flex-basis] duration-500',
+                            swipeCounts.left ? 'bg-red-400' : 'bg-gray-300',
+                        )}
+                        style={{
+                            flexBasis: `${leftRatio * 100}%`,
+                        }}
+                    >
+                        {swipeCounts.left}
+                    </div>
+                    <div
+                        className={cn(
+                            'flex items-center justify-center rounded-2xl min-w-8 text-white text-md font-bold transition-[flex-basis] duration-500',
+                            swipeCounts.right ? 'bg-green-400' : 'bg-gray-300',
+                        )}
+                        style={{
+                            flexBasis: `${rightRatio * 100}%`,
+                        }}
+                    >
+                        {swipeCounts.right}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
@@ -227,6 +284,9 @@ function StackedCardList() {
         setActivedDirection,
         getDirectionByDx,
         renderCard,
+        onSwipeLeft,
+        onSwipeRight,
+        updateSwipeCounts,
     } = useStackedCard();
 
     const handleDrag = () => {
@@ -244,7 +304,7 @@ function StackedCardList() {
         setActivedDirection(null);
     };
 
-    const handleDragEnd = async () => {
+    const handleDragEnd = async (cardValue: (typeof cards)[number]['value']) => {
         setActivedDirection(null);
 
         const direction = getDirectionByDx(mvX.get(), 100);
@@ -262,6 +322,15 @@ function StackedCardList() {
             }).finished;
 
             consumeCard();
+            updateSwipeCounts(direction);
+
+            if (direction === DIRECTION.LEFT && onSwipeLeft) {
+                await onSwipeLeft(cardValue);
+            }
+
+            if (direction === DIRECTION.RIGHT && onSwipeRight) {
+                await onSwipeRight(cardValue);
+            }
 
             mvX.set(0);
             mvY.set(0);
@@ -301,7 +370,7 @@ function StackedCardList() {
                                     }}
                                     onDrag={handleDrag}
                                     onDragStart={handleDragStart}
-                                    onDragEnd={handleDragEnd}
+                                    onDragEnd={() => handleDragEnd(card.value)}
                                 >
                                     {renderCard(card.value)}
                                 </motion.div>

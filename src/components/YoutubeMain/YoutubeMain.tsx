@@ -1,18 +1,30 @@
 'use client';
 
 import * as StackedCard from '@/src/components/StackedCard';
-import { youtubeSubscriptionsOptions } from '@/src/services/youtube/subscriptions/queries';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { youtubeSubscriptionQueryOptions } from '@/src/services/youtube/subscriptions/queries';
+import { YoutubeSubscription } from '@/src/services/youtube/subscriptions/types';
+import { useInfiniteQuery, useMutation } from '@tanstack/react-query';
 import { CardContent } from '../CardContent';
+import { youtubeSubscriptionMutationOptions } from '@/src/services/youtube/subscriptions/mutations';
 
 function YoutubeMain() {
     const { data, fetchNextPage, hasNextPage } = useInfiniteQuery(
-        youtubeSubscriptionsOptions.infinite({ pageParam: null }),
+        youtubeSubscriptionQueryOptions.infinite({ pageParam: null }),
     );
+    const deleteSubscriptionMutation = useMutation(youtubeSubscriptionMutationOptions.delete());
+
     const subscriptions = data?.pages.flatMap((page) => page?.items ?? []) ?? [];
     const totalCount = data?.pages?.[0]?.pageInfo?.totalResults ?? null;
 
-    console.log(data);
+    const handleSwipeLeft = (subscription: YoutubeSubscription) => {
+        if (!subscription.id) return;
+
+        try {
+            deleteSubscriptionMutation.mutate({ id: subscription.id });
+        } catch (error) {
+            console.error('Failed to delete subscription', error);
+        }
+    };
 
     return (
         <StackedCard.Root
@@ -21,6 +33,8 @@ function YoutubeMain() {
             onLoadMore={fetchNextPage}
             totalCount={totalCount}
             renderCard={(item) => <CardContent item={item} />}
+            prefetchThreshold={10}
+            onSwipeLeft={handleSwipeLeft}
         >
             <StackedCard.Background />
             <StackedCard.Score />

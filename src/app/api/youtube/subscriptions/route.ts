@@ -65,3 +65,33 @@ export const GET = async (req: NextRequest) => {
         return new Response('Failed to fetch subscriptions', { status: 500 });
     }
 };
+
+export const DELETE = async (req: NextRequest) => {
+    const session = await auth();
+    const authHeader = req.headers.get('authorization')?.split(' ')[1];
+
+    const accessToken = session?.accessToken ?? authHeader;
+
+    if (!accessToken) {
+        return new Response('Unauthorized', { status: 401 });
+    }
+
+    const subscriptionId = req.nextUrl.searchParams.get('id');
+
+    if (!subscriptionId) {
+        return new Response('Subscription id is required', { status: 400 });
+    }
+
+    const { youtubeClient } = createYoutubeClient(accessToken);
+
+    try {
+        await youtubeClient.subscriptions.delete({
+            id: subscriptionId,
+        });
+
+        return new Response(null, { status: 204 });
+    } catch (error) {
+        console.error('Failed to delete YouTube subscription', error);
+        return new Response('Failed to delete subscription', { status: 500 });
+    }
+};
