@@ -1,28 +1,20 @@
-import Image from 'next/image';
-import SignInButton from '../components/SignInButton';
-import SignOutButton from '../components/SignOutButton/SignOutButton';
 import { auth } from '../lib/auth';
-import { cn } from '../utils/cn';
+import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query';
+import { youtubeSubscriptionQueryOptions } from '../services/youtube/subscriptions/queries';
+import { YoutubeMain } from '../components/YoutubeMain';
+import { IntroMain } from '../components/IntroMain';
 
 export default async function Home() {
     const session = await auth();
+    const queryClient = new QueryClient();
 
-    console.log(session);
+    if (session) {
+        await queryClient.prefetchInfiniteQuery(youtubeSubscriptionQueryOptions.infinite({ pageParam: null }));
+    }
 
     return (
-        <div>
-            <main>
-                {!session?.user ? (
-                    <SignInButton />
-                ) : (
-                    <div className={cn('flex flex-col justify-center items-center min-h-screen')}>
-                        <div>{session.user.name}</div>
-                        <div>{session.user.email}</div>
-                        <Image src={session.user.image ?? ''} width={80} height={80} alt="profile" />
-                        <SignOutButton />
-                    </div>
-                )}
-            </main>
-        </div>
+        <HydrationBoundary state={dehydrate(queryClient)}>
+            <main>{session ? <YoutubeMain /> : <IntroMain />}</main>
+        </HydrationBoundary>
     );
 }

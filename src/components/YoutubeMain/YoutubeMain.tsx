@@ -6,6 +6,10 @@ import { YoutubeSubscription } from '@/src/services/youtube/subscriptions/types'
 import { useInfiniteQuery, useMutation } from '@tanstack/react-query';
 import { CardContent } from '../CardContent';
 import { youtubeSubscriptionMutationOptions } from '@/src/services/youtube/subscriptions/mutations';
+import { cn } from '@/src/utils/cn';
+import { Button } from '../ui/button';
+import { LogOutIcon } from 'lucide-react';
+import { signOut } from 'next-auth/react';
 
 function YoutubeMain() {
     const { data, fetchNextPage, hasNextPage } = useInfiniteQuery(
@@ -27,19 +31,32 @@ function YoutubeMain() {
     };
 
     return (
-        <StackedCard.Root
-            data={subscriptions}
-            hasMore={hasNextPage}
-            onLoadMore={fetchNextPage}
-            totalCount={totalCount}
-            renderCard={(item) => <CardContent item={item} />}
-            prefetchThreshold={10}
-            onSwipeLeft={handleSwipeLeft}
-        >
-            <StackedCard.Background />
-            <StackedCard.Score />
-            <StackedCard.List />
-        </StackedCard.Root>
+        <div className={cn('relative')}>
+            <StackedCard.Root
+                data={subscriptions}
+                hasMore={hasNextPage}
+                onLoadMore={fetchNextPage}
+                totalCount={totalCount}
+                renderCard={(item) => <CardContent item={item} />}
+                prefetchThreshold={10}
+                onSwipeLeft={handleSwipeLeft}
+            >
+                <StackedCard.Background />
+                <StackedCard.Score />
+                <StackedCard.List />
+            </StackedCard.Root>
+
+            <Button
+                variant="outline"
+                size="icon-lg"
+                className={cn('absolute bottom-6 right-6 w-12 h-12 rounded-full shadow-2xl cursor-pointer')}
+                onClick={() => signOut()}
+            >
+                <div className={cn()}>
+                    <LogOutIcon className={cn('stroke-3')} />
+                </div>
+            </Button>
+        </div>
     );
 }
 
