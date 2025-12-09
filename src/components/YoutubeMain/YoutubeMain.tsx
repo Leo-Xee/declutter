@@ -55,6 +55,14 @@ function YoutubeMain() {
                 </p>
             )}
 
+            <div
+                className={cn(
+                    'md:hidden fixed inset-0 w-full h-full backdrop-blur-lg flex items-center justify-center',
+                )}
+            >
+                <p className={cn('text-xl font-bold')}>데스크탑이나 태블릿에서 사용해주세요! 💻</p>
+            </div>
+
             <Button
                 variant="outline"
                 size="icon-lg"
