@@ -12,16 +12,17 @@ const fetchYoutubeSubscriptions = async ({
 }: GetYoutubeSubscriptionsParams): Promise<YoutubeSubscriptionsResponse | undefined> => {
     const fetcher = isClient() ? clientFetcher : serverFetcher;
 
-    try {
-        const response = await fetcher<YoutubeSubscriptionsResponse>('get', 'api/youtube/subscriptions', {
-            searchParams: {
-                pageToken: pageParam ?? undefined,
-            },
-        });
-        return response.json();
-    } catch (err) {
-        console.error(err);
+    const response = await fetcher<YoutubeSubscriptionsResponse>('get', 'api/youtube/subscriptions', {
+        searchParams: {
+            pageToken: pageParam ?? undefined,
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error('', {});
     }
+
+    return response.json();
 };
 
 const youtubeSubscriptionKeys = {
@@ -36,5 +37,6 @@ export const youtubeSubscriptionQueryOptions = {
             initialPageParam: pageParam,
             queryFn: ({ pageParam: currentPageParam }) => fetchYoutubeSubscriptions({ pageParam: currentPageParam }),
             getNextPageParam: (lastPage) => lastPage?.nextPageToken ?? undefined,
+            retry: false,
         }),
 };

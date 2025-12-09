@@ -262,6 +262,8 @@ function StackedCardScore() {
         });
     }
 
+    if (!totalCount) return null;
+
     return (
         <motion.div
             className={cn('absolute bg-gray-300/20 backdrop-blur-md rounded-3xl shadow-2xl p-3')}

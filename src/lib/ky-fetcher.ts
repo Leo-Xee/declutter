@@ -9,6 +9,7 @@ export async function clientFetcher<T>(method: Method, url: string, options?: Op
 
     const kyInstance = ky.create({
         prefixUrl: process.env.API_BASE_URL,
+        retry: 0,
         hooks: {
             beforeRequest: [
                 (req) => {
@@ -28,6 +29,7 @@ export async function serverFetcher<T>(method: Method, url: string, options?: Op
 
     const kyInstance = ky.create({
         prefixUrl: process.env.API_BASE_URL,
+        retry: 0,
         hooks: {
             beforeRequest: [
                 (req) => {

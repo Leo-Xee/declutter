@@ -29,6 +29,10 @@ export const GET = async (req: NextRequest) => {
                 ?.map((item) => item.snippet?.resourceId?.channelId)
                 .filter((id): id is string => Boolean(id)) ?? [];
 
+        if (!channelIds.length) {
+            return new Response('no subscriptions', { status: 404 });
+        }
+
         const { data: channelsData } = await youtubeClient.channels.list({
             id: channelIds,
             part: ['statistics', 'brandingSettings'],
