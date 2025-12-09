@@ -84,7 +84,7 @@ function CardContent({ item }: CardContentProps) {
                         ))}
                     </ul>
 
-                    <Button asChild variant="secondary" size="lg" className={cn('mt-auto')}>
+                    <Button asChild variant="outline" size="lg" className={cn('mt-auto')}>
                         <a target="_blank" rel="noopener noreferrer" href={channelUrl}>
                             채널로 이동하기
                         </a>
