@@ -57,7 +57,7 @@ function CardContent({ item }: CardContentProps) {
                         )}
                     />
                 </div>
-                <div className={cn('flex-2 bg-white rounded-2xl pt-12 pb-4 px-4 flex flex-col gap-3 h-full')}>
+                <div className={cn('flex-2 bg-white rounded-2xl pt-10 pb-4 px-4 flex flex-col gap-3 h-full')}>
                     <h2 className={cn('font-bold text-xl text-center truncate')}>{item.title}</h2>
 
                     {description && <p className={cn('text-sm text-gray-500 line-clamp-2')}>{description}</p>}
@@ -70,12 +70,14 @@ function CardContent({ item }: CardContentProps) {
                                         <div className={cn('font-bold text-2xl text-center')}>{value}</div>
                                     ) : (
                                         <div className={cn('flex gap-2 items-center font-bold text-xl')}>
-                                            <span>{value}</span>
-                                            <CountryFlag
-                                                countryCode={value ?? ''}
-                                                svg
-                                                style={{ width: '2rem', height: '2rem' }}
-                                            />
+                                            <span>{value ?? '-'}</span>
+                                            {value && (
+                                                <CountryFlag
+                                                    countryCode={value ?? ''}
+                                                    svg
+                                                    style={{ width: '2rem', height: '2rem' }}
+                                                />
+                                            )}
                                         </div>
                                     )}
                                 </div>
