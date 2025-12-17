@@ -8,7 +8,7 @@ export async function clientFetcher<T>(method: Method, url: string, options?: Op
     const session = await getSession();
 
     const kyInstance = ky.create({
-        prefixUrl: process.env.API_BASE_URL,
+        prefixUrl: process.env.BASE_URL,
         retry: 0,
         hooks: {
             beforeRequest: [
@@ -28,7 +28,7 @@ export async function serverFetcher<T>(method: Method, url: string, options?: Op
     const session = await auth();
 
     const kyInstance = ky.create({
-        prefixUrl: process.env.API_BASE_URL,
+        prefixUrl: process.env.BASE_URL,
         retry: 0,
         hooks: {
             beforeRequest: [
