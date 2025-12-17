@@ -37,7 +37,7 @@ function IntroMain() {
                     onHoverStart={handleCardHoverStart}
                     onHoverEnd={handleCardHoverEnd}
                 >
-                    <div className={cn('h-full w-full flex flex-col items-center gap-6 rounded-2xl bg-white py-10')}>
+                    <div className={cn('h-full w-full flex flex-col items-center gap-6 rounded-2xl bg-white py-5')}>
                         <YoutubeIcon className={cn('w-14 fill-[#FF0000] text-center')} alt="" />
                         <h2 className={cn('flex flex-col gap-4 text-2xl font-bold text-center')}>
                             유튜브 구독 정리를 <br />
@@ -55,6 +55,22 @@ function IntroMain() {
                         >
                             카드를 오른쪽으로 드래그해서 <br />
                             구글 로그인을 진행해주세요.
+                        </div>
+                        <div className={cn('flex gap-4 text-sm text-gray-600')}>
+                            <a
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                href={process.env.NEXT_PUBLIC_TERM_OF_SERVICE_URL}
+                            >
+                                이용약관
+                            </a>
+                            <a
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                href={process.env.NEXT_PUBLIC_PRIVACY_POLICY_URL}
+                            >
+                                개인정보처리방침
+                            </a>
                         </div>
                     </div>
                 </motion.article>
